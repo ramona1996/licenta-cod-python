@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import _thread
 import http.server
 import json
@@ -6,9 +8,14 @@ import sqlite3
 import time
 from datetime import datetime
 from random import randrange
+import Adafruit_DHT
+
+DHT_SENSOR=Adafruit_DHT.DHT22
+DHT_PIN1 = 18
+DHT_PIN2 = 17
 
 # portul la care va rula serverul
-PORT = 8080
+PORT = 8081
 REFRESH_TIME_IN_SECONDS=4
 
 # query creare tabela de valori
@@ -18,6 +25,40 @@ sql_create_valori_table = """ CREATE TABLE IF NOT EXISTS valori (
                                         valoare text NOT NULL,
                                         data text
                                     ); """
+
+
+s1h = 0
+s2h = 0
+s1t = 0
+s2t = 0
+
+cs1h = 0
+cs2h = 0
+cs1t = 0
+cs2t = 0
+
+#functia de citire senzor
+def read_sensor():
+    global s1h
+    global s2h
+    global s1t
+    global s2t
+    while True:
+        ts1h, ts1t = Adafruit_DHT.read_retry(DHT_SENSOR,DHT_PIN1)
+        ts2h, ts2t = Adafruit_DHT.read_retry(DHT_SENSOR,17)
+        cs1h = int(ts1h)
+        cs1t = int(ts1t)
+        cs2h = int(ts2h)
+        cs2t = int(ts2t)
+        if cs1h != s1h or cs1t != s1t or cs2h != s2h or cs2t != s2t:
+            s1h = cs1h
+            s1t = cs1t
+            s2h = cs2h
+            s2t = cs2t
+            save_data(s1h, s2h, s1t, s2t)
+            print("dummy sensor new data at " + str(datetime.now()))
+        time.sleep(REFRESH_TIME_IN_SECONDS)
+
 
 # creare conexiune la baza de date
 def get_new_connection():
@@ -91,33 +132,6 @@ connection.commit()
 
 # inchidere conexiune la baza de date
 connection.close()
-
-if inregistrari > 1:
-    get_data()
-
-
-
-s1h = (1)
-s2h = (0.22)
-s1t = (3)
-s2t = (5)
-
-
-def read_sensor():
-    global s1h
-    global s2h
-    global s1t
-    global s2t
-    while True:
-        s1h = randrange(0, 100)
-        s2h = randrange(0, 100)
-        s1t = randrange(-40, 80)
-        s2t = randrange(-40, 80)
-        save_data(s1h, s2h, s1t, s2t)
-        print("dummy sensor at " + str(datetime.now()))
-        time.sleep(REFRESH_TIME_IN_SECONDS)
-
-
 
 #clasa handler pentru request-urile de la severul web
 class MyHandler(http.server.SimpleHTTPRequestHandler):

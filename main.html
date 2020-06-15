@@ -81,12 +81,12 @@
 
 <div class="data-block">
     <div class="gauge-container">
-        <div> Indicele de comfort termic SENZOR 1: <span id="gauge_indice_comfort_senzor_1_text"  class="gauge-text">-</span> %</div>
+        <div> Indicele de comfort termic SENZOR A: <span id="gauge_indice_comfort_senzor_1_text"  class="gauge-text">-</span> </div>
         <canvas id="gauge_indice_comfort_senzor_1"></canvas>
     </div>
 
     <div class="gauge-container">
-        <div> Indicele de comfort termic SENZOR 2: <span id="gauge_indice_comfort_senzor_2_text"  class="gauge-text">-</span> %</div>
+        <div> Indicele de comfort termic SENZOR B: <span id="gauge_indice_comfort_senzor_2_text"  class="gauge-text">-</span> </div>
         <canvas id="gauge_indice_comfort_senzor_2"></canvas>
     </div>
 </div>
@@ -121,6 +121,9 @@
         chartDeCorelatieUmiditate,
         gaugeIndiceComfortTermicSenzor1,
         gaugeIndiceComfortTermicSenzor2;
+        
+        //datele de scatter
+        var scatterTempData = [{x: 0, y:0}], scatterUmidData = [{x: 0, y:0}];
 
     function updateZonaDeRecomandari(t1, t2, u1, u2){
         var fullTxt = '', cnt = 0;
@@ -325,8 +328,7 @@
         document.getElementById('gauge_indice_comfort_senzor_2_text').innerHTML = csenz2;
 
 
-        //datele de scatter
-        var scatterTempData = [], scatterUmidData = [];
+        
         for(var i = 0; i < _values['s1t'].length; i++){
             scatterTempData.push(
                 {
