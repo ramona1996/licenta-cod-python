@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Licenta Neamtu Maria Ramona - 2020</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.3/Chart.bundle.js" integrity="sha256-8zyeSXm+yTvzUN1VgAOinFgaVFEFTyYzWShOy9w7WoQ=" crossorigin="anonymous"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gauge.js/1.3.7/gauge.min.js" integrity="sha256-HH1wHY2j4sBftE2MShPBP66TfW18/D3xfq1nmIGbxbI=" crossorigin="anonymous"></script>
+</head>
+
+<style>
+
+    body {
+        padding: 20px;
+    }
+    .data-block {
+
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .bordered {
+        border: 1px solid black;
+    }
+
+    .gauge-container {
+        text-align: center;
+        display: inline-block;
+        border: 1px solid black;
+        margin: 10px;
+        padding: 10px;
+    }
+
+    .gauge-text {
+        font-weight: bold;
+    }
+
+    #zona_de_recomandari {
+        position: fixed;
+        top: 0;
+        background: aliceblue;
+        padding: 10px;
+    }
+
+</style>
+<body>
+
+<div id="zona_de_recomandari">
+</div>
+
+<div class="data-block" style="margin-top: 70px">
+    <div class="gauge-container">
+        <div> Temperatura SENZOR A: <span id="gauge_senzor_1_temp_text"  class="gauge-text">-</span> &deg;</div>
+        <canvas id="gauge_senzor_1_temp"></canvas>
+    </div>
+
+    <div class="gauge-container">
+        <div> Umiditate SENZOR A: <span id="gauge_senzor_1_h_text"  class="gauge-text">-</span></div>
+        <canvas id="gauge_senzor_1_h"></canvas>
+    </div>
+
+    <div class="gauge-container">
+        <div> Temperatura SENZOR B: <span id="gauge_senzor_2_temp_text"  class="gauge-text">-</span> &deg;</div>
+        <canvas id="gauge_senzor_2_temp"></canvas>
+    </div>
+
+    <div class="gauge-container">
+        <div> Umiditate SENZOR B: <span id="gauge_senzor_2_h_text"  class="gauge-text">-</span></div>
+        <canvas id="gauge_senzor_2_h"></canvas>
+    </div>
+</div>
+
+<div class="data-block">
+    <div class="gauge-container">
+        <div> Indicele de comfort termic SENZOR 1: <span id="gauge_indice_comfort_senzor_1_text"  class="gauge-text">-</span> %</div>
+        <canvas id="gauge_indice_comfort_senzor_1"></canvas>
+    </div>
+
+    <div class="gauge-container">
+        <div> Indicele de comfort termic SENZOR 2: <span id="gauge_indice_comfort_senzor_2_text"  class="gauge-text">-</span> %</div>
+        <canvas id="gauge_indice_comfort_senzor_2"></canvas>
+    </div>
+</div>
+
+
+
+<canvas id="chart_de_temperatura" class="data-block bordered"></canvas>
+<canvas id="chart_de_corelatie_temperatura" class="data-block bordered"></canvas>
+
+<canvas id="chart_de_umiditate" class="data-block bordered"></canvas>
+<canvas id="chart_de_corelatie_umiditate" class="data-block bordered" style="margin-bottom: 400px"></canvas>
+</body>
+
+
+<script>
+    var REFRESH_RATE = 4,
+    TEMP_MIN = -40,
+    TEMP_MAX = 80,
+    H_MIN = 0,
+    H_MAX = 100,
+    _values = {},
+    _labels = {}
+    _dataset = {};
+
+    var chartDeUmiditate,
+        chartDeTemperatura,
+        gaugeSenzor1Temperatura,
+        gaugeSenzor2Temperatura,
+        gaugeSenzor1Umiditate,
+        gaugeSenzor2Umiditate,
+        chartDeCorelatieTemperatura,
+        chartDeCorelatieUmiditate,
+        gaugeIndiceComfortTermicSenzor1,
+        gaugeIndiceComfortTermicSenzor2;
+
+    function updateZonaDeRecomandari(t1, t2, u1, u2){
+        var fullTxt = '', cnt = 0;
+        for(var i = 0; i < _dataset.length; i++){
+            var cdata = _dataset[i];
+            var cdata_text = cdata.conditions.replace(/t1/g, t1)
+                                             .replace(/t2/g, t2)
+                                             .replace(/u1/g, u1)
+                                             .replace(/u2/g, u2);
+            var apply = eval(cdata_text);
+            //console.log('(' + cdata_text + ') = ' + apply);
+            if(apply){
+                fullTxt += (cnt > 0 ? ' &nbsp; ' : '') + cdata.text;
+                cnt++;
+            }
+
+        }
+        document.getElementById('zona_de_recomandari').innerHTML = fullTxt;
+    }
+
+    function comfortTermic(T, U){
+        var val = (T * 1.8 + 32) - (0.55 - 0.0055 * U) * (T * 1.8 + 32) - 58;
+        return Math.floor(val > 0 ? (val < 100 ? val : 100) : 0);
+    }
+
+    function initCharts(history_data){
+        if(!history_data){
+            return;
+        }
+
+
+
+        //place each row to corresponding dataset
+        for(var i = 0; i < history_data.length; i++){
+            var row = history_data[i];
+            //console.log(row);
+            var sensor_type = row[1]
+                sensor_value = row[2]
+                sensor_date_str = row[3];
+            if(!_values[sensor_type]){
+                _values[sensor_type] = [];
+            }
+            if(!_labels[sensor_type]){
+                _labels[sensor_type] = [];
+            }
+
+            var int_val = +sensor_value;
+            if(int_val && int_val != NaN){
+                _values[sensor_type].push(+sensor_value);
+                _labels[sensor_type].push(sensor_date_str);
+            }
+        }
+
+        console.log(_values);
+        console.log(_labels);
+
+        var ctx1 = document.getElementById('chart_de_umiditate').getContext('2d');
+        chartDeUmiditate = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: _labels['s1h'],
+                datasets: [
+                {
+                    label: 'Umiditate SENZOR A',
+                    borderColor: 'red',
+                    data:  _values['s1h'],
+                    fill: false
+                },
+
+                {
+                    label: 'Umiditate SENZOR B',
+                    borderColor: 'blue',
+                    data:  _values['s2h'],
+                    fill: false
+                }
+
+                ]
+            }
+        });
+
+        var ctx2 = document.getElementById('chart_de_temperatura').getContext('2d');
+        chartDeTemperatura = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: _labels['s1t'],
+                datasets: [
+                {
+                    label: 'Temperatura SENZOR A',
+                    borderColor: 'red',
+                    data:  _values['s1t'],
+                    fill: false
+                },
+
+                {
+                    label: 'Temperatura SENZOR B',
+                    borderColor: 'blue',
+                    data:  _values['s2t'],
+                    fill: false
+                }
+
+                ]
+            }
+        });
+
+
+
+
+
+        var gaugeIndiceOpts = {
+            angle: 0.1, // The span of the gauge arc
+            lineWidth: 0.3, // The line thickness
+            radiusScale: 1, // Relative radius
+            pointer: {
+                length: 0.6, // // Relative to gauge radius
+                strokeWidth: 0.035, // The thickness
+                color: '#000000' // Fill color
+            },
+            limitMax: false,     // If false, max value increases automatically if value > maxValue
+            limitMin: false,     // If true, the min value of the gauge will be fixed
+            colorStart: '#6F6EA0',   // Colors
+            colorStop: '#C0C0DB',    // just experiment with them
+            strokeColor: '#EEEEEE',
+            generateGradient: true,
+            highDpiSupport: true,     // High resolution support
+            staticZones: [
+                 {strokeStyle: "green", min: 0, max: 65},  //comfort
+                 {strokeStyle: "orange", min: 66, max: 79}, //discomfort
+                 {strokeStyle: "red", min: 80, max: 100} //alerta
+            ]
+        };
+
+
+
+        var gaugeSimpleOpts = {
+            angle: 0.1, // The span of the gauge arc
+            lineWidth: 0.3, // The line thickness
+            radiusScale: 1, // Relative radius
+            pointer: {
+                length: 0.6, // // Relative to gauge radius
+                strokeWidth: 0.035, // The thickness
+                color: '#000000' // Fill color
+            },
+            limitMax: false,     // If false, max value increases automatically if value > maxValue
+            limitMin: false,     // If true, the min value of the gauge will be fixed
+            colorStart: '#6F6EA0',   // Colors
+            colorStop: '#C0C0DB',    // just experiment with them
+            strokeColor: '#EEEEEE',
+            generateGradient: true,
+            highDpiSupport: true
+        };
+
+        gaugeSenzor1Temperatura = new Gauge(document.getElementById('gauge_senzor_1_temp')).setOptions(gaugeSimpleOpts);
+        gaugeSenzor1Temperatura.maxValue = TEMP_MAX; // set max gauge value
+        gaugeSenzor1Temperatura.setMinValue(TEMP_MIN);  // Prefer setter over gauge.minValue = 0
+        gaugeSenzor1Temperatura.animationSpeed = 32; // set animation speed (32 is default value)
+        var val1 = +(_values['s1t'][_values['s1t'].length - 1]);
+        gaugeSenzor1Temperatura.set(val1); // set actual value
+        document.getElementById('gauge_senzor_1_temp_text').innerHTML = val1;
+
+        gaugeSenzor2Temperatura = new Gauge(document.getElementById('gauge_senzor_2_temp')).setOptions(gaugeSimpleOpts);
+        gaugeSenzor2Temperatura.maxValue = TEMP_MAX; // set max gauge value
+        gaugeSenzor2Temperatura.setMinValue(TEMP_MIN);  // Prefer setter over gauge.minValue = 0
+        gaugeSenzor2Temperatura.animationSpeed = 32; // set animation speed (32 is default value)
+        var val2 = +(_values['s2t'][_values['s2t'].length - 1]);
+        gaugeSenzor2Temperatura.set(val2); // set actual value
+        document.getElementById('gauge_senzor_2_temp_text').innerHTML = val2;
+
+
+        gaugeSenzor1Umiditate = new Gauge(document.getElementById('gauge_senzor_1_h')).setOptions(gaugeSimpleOpts);
+        gaugeSenzor1Umiditate.maxValue = H_MAX; // set max gauge value
+        gaugeSenzor1Umiditate.setMinValue(H_MIN);  // Prefer setter over gauge.minValue = 0
+        gaugeSenzor1Umiditate.animationSpeed = 32; // set animation speed (32 is default value)
+        var val3 = +(_values['s1h'][_values['s1h'].length - 1]);
+        gaugeSenzor1Umiditate.set(val3); // set actual value
+        document.getElementById('gauge_senzor_1_h_text').innerHTML = val3;
+
+
+        gaugeSenzor2Umiditate = new Gauge(document.getElementById('gauge_senzor_2_h')).setOptions(gaugeSimpleOpts);
+        gaugeSenzor2Umiditate.maxValue = H_MAX; // set max gauge value
+        gaugeSenzor2Umiditate.setMinValue(H_MIN);  // Prefer setter over gauge.minValue = 0
+        gaugeSenzor2Umiditate.animationSpeed = 32; // set animation speed (32 is default value)
+        var val4 = +(_values['s2h'][_values['s2h'].length - 1]);
+        gaugeSenzor2Umiditate.set(val4); // set actual value
+        document.getElementById('gauge_senzor_2_h_text').innerHTML = val4;
+
+
+        gaugeIndiceComfortTermicSenzor1 = new Gauge(document.getElementById('gauge_indice_comfort_senzor_1')).setOptions(gaugeIndiceOpts);
+        gaugeIndiceComfortTermicSenzor1.maxValue = (100);
+        gaugeIndiceComfortTermicSenzor1.setMinValue(0);
+        gaugeIndiceComfortTermicSenzor1.animationSpeed = 32;
+        var csenz1 = comfortTermic(val1, val3);
+        gaugeIndiceComfortTermicSenzor1.set(csenz1);
+        document.getElementById('gauge_indice_comfort_senzor_1_text').innerHTML = csenz1;
+
+
+        gaugeIndiceComfortTermicSenzor2 = new Gauge(document.getElementById('gauge_indice_comfort_senzor_2')).setOptions(gaugeIndiceOpts);
+        gaugeIndiceComfortTermicSenzor2.maxValue = (100);
+        gaugeIndiceComfortTermicSenzor2.setMinValue(0);
+        gaugeIndiceComfortTermicSenzor2.animationSpeed = 32;
+        var csenz2 = comfortTermic(val2, val4);
+        gaugeIndiceComfortTermicSenzor2.set(csenz2);
+        document.getElementById('gauge_indice_comfort_senzor_2_text').innerHTML = csenz2;
+
+
+        //datele de scatter
+        var scatterTempData = [], scatterUmidData = [];
+        for(var i = 0; i < _values['s1t'].length; i++){
+            scatterTempData.push(
+                {
+                    x: _values['s1t'][i],
+                    y: _values['s2t'][i]
+                }
+            );
+        }
+
+        for(var i = 0; i < _values['s1h'].length; i++){
+            scatterUmidData.push(
+                {
+                    x: _values['s1h'][i],
+                    y: _values['s2h'][i]
+                }
+            );
+        }
+
+        var ctx3 = document.getElementById('chart_de_corelatie_temperatura').getContext('2d');
+        chartDeCorelatieTemperatura = new Chart(ctx3, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Corelatii valori temperatura',
+                    data: scatterTempData,
+                    backgroundColor: '#d2691e',
+                }]
+            }
+        });
+
+
+        var ctx4 = document.getElementById('chart_de_corelatie_umiditate').getContext('2d');
+        chartDeCorelatieUmiditate = new Chart(ctx4, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Corelatii valori umiditate',
+                    data: scatterUmidData,
+                    backgroundColor: '#841ed2',
+                }]
+            }
+        });
+
+        updateZonaDeRecomandari(val1, val2, val3, val4)
+
+
+        setTimeout(updateCharts, 1000 * REFRESH_RATE);
+    }
+
+
+
+    function updateCharts(){
+        $.get( "/sensors", function( data ) {
+            //console.log("charts update with ", data.sensors.s1h, data.sensors.s2h, data.sensors.s1t, data.sensors.s2t)
+
+            chartDeUmiditate.data.labels.push(data.sensors.date)
+            chartDeUmiditate.data.datasets[0].data.push(data.sensors.s1h)
+            chartDeUmiditate.data.datasets[1].data.push(data.sensors.s2h)
+
+            chartDeTemperatura.data.labels.push(data.sensors.date)
+            chartDeTemperatura.data.datasets[0].data.push(data.sensors.s1t)
+            chartDeTemperatura.data.datasets[1].data.push(data.sensors.s2t)
+
+            chartDeCorelatieTemperatura.data.datasets[0].data.push({
+                x: data.sensors.s1t,
+                y: data.sensors.s2t
+            });
+
+            gaugeSenzor1Temperatura.set(data.sensors.s1t);
+            document.getElementById('gauge_senzor_1_temp_text').innerHTML = data.sensors.s1t;
+
+            gaugeSenzor2Temperatura.set(data.sensors.s2t);
+            document.getElementById('gauge_senzor_2_temp_text').innerHTML = data.sensors.s2t;
+
+            gaugeSenzor1Umiditate.set(data.sensors.s1h);
+            document.getElementById('gauge_senzor_1_h_text').innerHTML = data.sensors.s1h;
+
+            gaugeSenzor2Umiditate.set(data.sensors.s2h);
+            document.getElementById('gauge_senzor_2_h_text').innerHTML = data.sensors.s2h;
+
+            var comfort1 = comfortTermic(data.sensors.s1t, data.sensors.s1h)
+            var comfort2 = comfortTermic(data.sensors.s2t, data.sensors.s2h)
+
+            gaugeIndiceComfortTermicSenzor1.set(comfort1);
+            document.getElementById('gauge_indice_comfort_senzor_1_text').innerHTML = comfort1;
+
+            gaugeIndiceComfortTermicSenzor2.set(comfort2);
+            document.getElementById('gauge_indice_comfort_senzor_2_text').innerHTML = comfort2;
+            try {
+                updateZonaDeRecomandari(
+                    data.sensors.s1t,
+                    data.sensors.s2t,
+                    data.sensors.s1h,
+                    data.sensors.s2h
+                );
+            } catch(e) {
+
+            }
+
+            chartDeUmiditate.update();
+            chartDeTemperatura.update();
+            chartDeCorelatieTemperatura.update();
+
+            setTimeout(updateCharts, 1000 * REFRESH_RATE);
+        });
+    }
+
+
+    $(document).ready(function(){
+        $.get("/dataset", function(dataset){
+            _dataset = dataset;
+        });
+
+        $.get( "/history", function( history_data ) {
+           initCharts(history_data);
+        });
+    });
+
+</script>
+
+</html>
