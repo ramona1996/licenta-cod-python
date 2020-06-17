@@ -15,7 +15,7 @@ DHT_PIN1 = 18
 DHT_PIN2 = 17
 
 # portul la care va rula serverul
-PORT = 8081
+PORT = 80
 REFRESH_TIME_IN_SECONDS=4
 
 # query creare tabela de valori
