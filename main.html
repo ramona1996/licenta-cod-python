@@ -21,6 +21,7 @@
 
     body {
         padding: 20px;
+        padding-left: 30%;
     }
     .data-block {
 
@@ -49,6 +50,8 @@
         top: 0;
         background: aliceblue;
         padding: 10px;
+        left: 0;
+        width: 28%;
     }
 
 </style>
@@ -57,7 +60,7 @@
 <div id="zona_de_recomandari">
 </div>
 
-<div class="data-block" style="margin-top: 70px">
+<div class="data-block" style="margin-top: 140px">
     <div class="gauge-container">
         <div> Temperatura SENZOR A: <span id="gauge_senzor_1_temp_text"  class="gauge-text">-</span> &deg;</div>
         <canvas id="gauge_senzor_1_temp"></canvas>
@@ -68,6 +71,7 @@
         <canvas id="gauge_senzor_1_h"></canvas>
     </div>
 
+    <br>
     <div class="gauge-container">
         <div> Temperatura SENZOR B: <span id="gauge_senzor_2_temp_text"  class="gauge-text">-</span> &deg;</div>
         <canvas id="gauge_senzor_2_temp"></canvas>
@@ -102,7 +106,7 @@
 
 
 <script>
-    var REFRESH_RATE = 4,
+    var REFRESH_RATE = 60,
     TEMP_MIN = -40,
     TEMP_MAX = 80,
     H_MIN = 0,
@@ -125,23 +129,39 @@
         //datele de scatter
         var scatterTempData = [{x: 0, y:0}], scatterUmidData = [{x: 0, y:0}];
 
-    function updateZonaDeRecomandari(t1, t2, u1, u2){
-        var fullTxt = '', cnt = 0;
+    function oraZilei(){
+       return new Date().getHours();
+    }
+
+    function updateZonaDeRecomandari(t1, t2, h1, h2){
+        var txtMap = {
+            'Senzor A': [],
+            'Senzor B': [],
+            'Atentionari': []
+        }
+
         for(var i = 0; i < _dataset.length; i++){
             var cdata = _dataset[i];
-            var cdata_text = cdata.conditions.replace(/t1/g, t1)
+            var cdata_text = cdata.conditie.replace(/t1/g, t1)
                                              .replace(/t2/g, t2)
-                                             .replace(/u1/g, u1)
-                                             .replace(/u2/g, u2);
-            var apply = eval(cdata_text);
-            //console.log('(' + cdata_text + ') = ' + apply);
-            if(apply){
-                fullTxt += (cnt > 0 ? ' &nbsp; ' : '') + cdata.text;
-                cnt++;
-            }
+                                             .replace(/h1/g, h1)
+                                             .replace(/h2/g, h2);
 
+            var apply = eval(cdata_text);
+
+            if(apply){
+                console.log('(' + cdata_text + ') = ' + apply);
+                txtMap[cdata.grup].push(cdata.text);
+            }
         }
-        document.getElementById('zona_de_recomandari').innerHTML = fullTxt;
+
+        var finText = '';
+        for(var i in txtMap){
+            if(txtMap[i].length > 0){
+                finText += '<b>' + i + ': </b> <i>' + txtMap[i].join(' ') + '</i><br>';
+            }
+        }
+        document.getElementById('zona_de_recomandari').innerHTML = finText;
     }
 
     function comfortTermic(T, U){
@@ -249,7 +269,9 @@
             generateGradient: true,
             highDpiSupport: true,     // High resolution support
             staticZones: [
-                 {strokeStyle: "green", min: 0, max: 65},  //comfort
+                 {strokeStyle: "red", min: 0, max: 10}, //alerta
+                 {strokeStyle: "orange", min: 10, max: 20}, //discomfort
+                 {strokeStyle: "green", min: 20, max: 65},  //comfort
                  {strokeStyle: "orange", min: 66, max: 79}, //discomfort
                  {strokeStyle: "red", min: 80, max: 100} //alerta
             ]
@@ -375,7 +397,17 @@
         updateZonaDeRecomandari(val1, val2, val3, val4)
 
 
-        setTimeout(updateCharts, 1000 * REFRESH_RATE);
+       startUpdate();
+    }
+
+    var tm = 0;
+    function startUpdate(){
+        tm = setTimeout(updateCharts, 1000 * REFRESH_RATE);
+    }
+
+
+    function stopUpdate(){
+        clearTimeout(tm);
     }
 
 
