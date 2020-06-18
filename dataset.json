@@ -6,7 +6,7 @@
   },
   {
     "conditie": "t2 <= 0",
-    "text": "Frig. Este posibil ca apa sa inghete.",
+    "text": "Frig. Este posibil ca apa sa inghete. Porniti centrala.",
     "grup": "Senzor B"
   },
 
@@ -18,7 +18,7 @@
 
   {
     "conditie": "t2 > 35",
-    "text": "Temperaturi caniculare.",
+    "text": "Temperaturi caniculare. Porniti aerul conditionat.",
     "grup": "Senzor B"
   },
 
@@ -36,7 +36,7 @@
 
   {
     "conditie": "h2 < 40",
-    "text": "Nivelul de umiditate a scazut sub limita admisa.",
+    "text": "Nivelul de umiditate a scazut sub limita admisa. Porniti umidificatorul.",
     "grup": "Senzor B"
   },
 
@@ -48,7 +48,7 @@
 
   {
     "conditie": "h2 > 60",
-    "text": "Nivelul de umiditate a depasit limita admisa.",
+    "text": "Nivelul de umiditate a depasit limita admisa. Porniti dezumidificatorul.",
     "grup": "Senzor B"
   },
 
@@ -78,13 +78,13 @@
 
   {
     "conditie": "!(t1 > 20 && t1 < 25)",
-    "text": "Nu este o temperatura buna pentru plante termofile.",
+    "text": "Este o temperatura buna pentru plante termofile.",
     "grup": "Senzor A"
   },
 
   {
     "conditie": "!(t2 > 20 && t2 < 25)",
-    "text": "Nu este o temperatura buna pentru plante termofile.",
+    "text": "Este o temperatura buna pentru plante termofile.",
     "grup": "Senzor B"
   },
 
